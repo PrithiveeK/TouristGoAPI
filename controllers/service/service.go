@@ -276,3 +276,77 @@ func AddPricing(id int64, newPriceDetails []Models.NewPriceDetails) error {
 	}
 	return nil
 }
+
+//Overall is the model for overall data
+type Overall struct {
+	Services  int64 `json:"services"`
+	Countries int64 `json:"countries"`
+	Cities    int64 `json:"cities"`
+}
+
+//OverallData fetches the count of services, countries, cities
+func OverallData() (Overall, error) {
+	var overall Overall
+
+	if err := dbMod.DB.QueryRow(`SELECT COUNT(*) FROM services`).Scan(&overall.Services); err != nil {
+		log.Printf("Error counting services: %s", err)
+		return Overall{}, err
+	}
+
+	if err := dbMod.DB.QueryRow(`SELECT COUNT(*) FROM countries`).Scan(&overall.Countries); err != nil {
+		log.Printf("Error counting countries: %s", err)
+		return Overall{}, err
+	}
+
+	if err := dbMod.DB.QueryRow(`SELECT COUNT(*) FROM cities`).Scan(&overall.Cities); err != nil {
+		log.Printf("Error counting cities: %s", err)
+		return Overall{}, err
+	}
+	return overall, nil
+}
+
+//Random fetches all the services for a random country
+func Random() ([]Models.Service, error) {
+	var randomCountry int64
+
+	if err := dbMod.DB.QueryRow(`SELECT country_id from services order by random() limit 1`).Scan(&randomCountry); err != nil {
+		log.Printf("Error finding random record countries: %s", err)
+		return nil, err
+	}
+
+	queryServices := `
+		SELECT service.id AS id, service.name AS name, service.code AS code,
+		service.country_id AS country_id, service.city_id AS city_id,
+		country.name AS country_name, city.name AS city_name,
+		service.service_type_id AS service_type_id, st.name AS service_type_name
+		FROM services AS service
+		LEFT JOIN service_types AS st ON st.id = service.service_type_id
+		LEFT JOIN countries AS country ON country.id = service.country_id
+		LEFT JOIN cities AS city ON city.id = service.city_id
+		WHERE service.status = 'ACTIVE' and service.country_id = $1
+	`
+	var services []Models.Service
+	rows, err := dbMod.DB.Query(queryServices, randomCountry)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	for rows.Next() {
+		var service Models.Service
+
+		if err = rows.Scan(
+			&service.ID, &service.Name, &service.Code, &service.CountryID,
+			&service.CityID, &service.CountryName, &service.CityName,
+			&service.ServiceTypeID, &service.ServiceTypeName,
+		); err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		services = append(services, service)
+	}
+
+	return services, nil
+
+}

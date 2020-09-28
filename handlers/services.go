@@ -183,3 +183,35 @@ func GetAllPlaceholderServices(c *fiber.Ctx) error {
 		"data": services,
 	})
 }
+
+//GetOverallData gets the count of services, countries and cities
+func GetOverallData(c *fiber.Ctx) error {
+	data, err := Service.OverallData()
+	if err != nil {
+		return c.JSON(&fiber.Map{
+			"code": 500,
+			"msg":  "Sorry!",
+		})
+	}
+	return c.JSON(&fiber.Map{
+		"code": 200,
+		"data": data,
+		"msg":  "fetched overall data",
+	})
+}
+
+//GetRandomService gets services in a random country
+func GetRandomService(c *fiber.Ctx) error {
+	data, err := Service.Random()
+	if err != nil {
+		return c.JSON(&fiber.Map{
+			"code": 500,
+			"msg":  "Sorry!",
+		})
+	}
+	return c.JSON(&fiber.Map{
+		"code": 200,
+		"data": data,
+		"msg":  "fetched random service data",
+	})
+}

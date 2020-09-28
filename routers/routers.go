@@ -9,15 +9,17 @@ import (
 //Routes defines all the routings in this api
 func Routes(app *fiber.App) {
 
-	api := app.Group("/api", middleware.Authentication, middleware.AccessAuthorization)
+	api := app.Group("/api", middleware.Authentication)
 
-	api.Get("/", middleware.RouteAccess, func(c *fiber.Ctx) error {
+	api.Get("/", func(c *fiber.Ctx) error {
 		return c.SendStatus(200)
 	})
 	api.Get("/accesses", handlers.GetAllAccesses)
+	api.Get("/overall", handlers.GetOverallData)
+	api.Get("/random", handlers.GetRandomService)
 
-	bga := api.Group("/BGA", middleware.RouteAccess)
-	aga := api.Group("/AGA", middleware.RouteAccess)
+	bga := api.Group("/BGA", middleware.AccessAuthorization, middleware.RouteAccess)
+	aga := api.Group("/AGA", middleware.AccessAuthorization, middleware.RouteAccess)
 
 	aga.Get("/services", handlers.GetAllServices)
 	aga.Post("/services", handlers.AddService)
